@@ -128,29 +128,57 @@ const App = () => {
   const getResultData = useCallback(() => {
     const score = calculateScore();
 
-    if (score >= 12) {
+    if (score >= 13) {
       return {
-        title: 'AI-Savvy',
-        subtitle: 'You\'re scaling with a brain and a backbone. Nice.',
-        description: 'Let\'s sharpen the edge.',
+        title: 'Automation Leader',
+        subtitle: 'You\'ve built what most business owners dream about.',
+        description: 'Congratulations - you\'ve systematized operations, embedded AI throughout your business, make data-driven decisions, and have tied everything to exit value creation. You\'re in the top 5% of business owners. Your business runs without you, learns constantly, and increases in value daily.',
         color: '#00B2A9',
-        emoji: '🚀'
+        emoji: '🏆',
+        priorityActions: [
+          'Document your methodology - it\'s valuable IP',
+          'Consider when (not if) to exit or scale into new markets',
+          'Share your journey - you could help other business owners transform'
+        ]
       };
-    } else if (score >= 6) {
+    } else if (score >= 9) {
       return {
-        title: 'Mid-Pack',
-        subtitle: 'You\'ve got potential—but margin and value are being left on the table.',
-        description: 'We can help fix that.',
+        title: 'Scale Ready',
+        subtitle: 'A few strategic tweaks and you\'ll be operating at maximum value.',
+        description: 'You\'ve built solid systems, you\'re using data and AI in meaningful ways, and you\'re thinking strategically about exit value. You\'ve removed yourself from most daily operations. The remaining gaps are the difference between a good exit and a great one.',
+        color: '#2E86AB',
+        emoji: '🚀',
+        priorityActions: [
+          'Document your AI strategy as part of your investment thesis for buyers',
+          'Optimize the 20% of operations still requiring your involvement',
+          'Build predictive revenue models using your data infrastructure'
+        ]
+      };
+    } else if (score >= 5) {
+      return {
+        title: 'System Skeptic',
+        subtitle: 'You\'re in the dangerous middle - some systems, but not enough freedom.',
+        description: 'You\'ve begun delegating and have dabbled with automation, but you\'re still the linchpin. You understand AI could help but haven\'t fully committed to implementing it. You\'re thinking about exit value, but it\'s not driving daily decisions. You\'re so close to breakthrough.',
         color: '#FFA500',
-        emoji: '⚡'
+        emoji: '⚡',
+        priorityActions: [
+          'Identify your top 3 bottlenecks and assign AI solutions to each',
+          'Move from \'experience + some data\' to fully data-driven decisions',
+          'Tie every operational improvement directly to exit value metrics'
+        ]
       };
     } else {
       return {
         title: 'Ops Dinosaur',
-        subtitle: 'Your business is running on caffeine and chaos.',
-        description: 'The good news? You know now.',
+        subtitle: 'But the good news? You know now.',
+        description: 'You\'re deeply embedded in day-to-day operations, making decisions by gut feel, and running mostly manual processes. This is normal for most business owners - but it\'s costing you time, money, and enterprise value. The gap between where you are and where you could be represents £X in unrealized business value.',
         color: '#FF6B6B',
-        emoji: '🦕'
+        emoji: '🦕',
+        priorityActions: [
+          'Free yourself from decision bottlenecks - start with one approval process you can delegate',
+          'Automate your biggest time-sink - usually customer service or marketing follow-ups',
+          'Create your first exit-focused KPI dashboard'
+        ]
       };
     }
   }, [calculateScore]);
@@ -708,10 +736,55 @@ const App = () => {
             </p>
             <p style={{
               fontSize: 'clamp(1rem, 2.5vw, 1.1rem)',
-              color: '#6c757d'
+              color: '#6c757d',
+              marginBottom: '2rem'
             }}>
               {resultData.description}
             </p>
+
+            <div style={{ textAlign: 'left', marginTop: '2rem' }}>
+              <h4 style={{
+                color: '#0A2342',
+                fontSize: '1.1rem',
+                fontWeight: 700,
+                marginBottom: '1rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}>
+                🎯 Top 3 Priority Actions:
+              </h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                {resultData.priorityActions.map((action, index) => (
+                  <div key={index} style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '0.8rem',
+                    background: 'white',
+                    padding: '1rem',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(0,0,0,0.05)',
+                    boxShadow: '0 2px 5px rgba(0,0,0,0.02)'
+                  }}>
+                    <span style={{
+                      background: resultData.color,
+                      color: 'white',
+                      width: '24px',
+                      height: '24px',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '0.8rem',
+                      fontWeight: 'bold',
+                      flexShrink: 0,
+                      marginTop: '0.1rem'
+                    }}>{index + 1}</span>
+                    <span style={{ fontSize: '0.95rem', color: '#495057' }}>{action}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
           <div style={{

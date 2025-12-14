@@ -676,6 +676,8 @@ const App = () => {
   }
 
   // Results page
+  const score = calculateScore();
+  const percentageScore = Math.round((score / 14) * 100);
   const resultData = getResultData();
 
   return (
@@ -708,6 +710,15 @@ const App = () => {
             margin: '1rem 0'
           }}>
             {resultData.emoji}
+          </div>
+
+          <div style={{
+            fontSize: 'clamp(1.5rem, 4vw, 2rem)',
+            fontWeight: 800,
+            color: '#0A2342', // Dark blue for contrast
+            marginBottom: '0.5rem'
+          }}>
+            Score: {percentageScore}%
           </div>
 
           <h2 style={{

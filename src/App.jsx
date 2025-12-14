@@ -7,8 +7,12 @@ const App = () => {
   const [answers, setAnswers] = useState({});
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [userEmail, setUserEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const calendarUrl = 'https://calendar.google.com/calendar/appointments/schedules/AcZssZ1dDhVTC6nmAqTpQ744WdiVX5HYpBpJuieMFd2Bsk7-iFlARlw8EuBzT7ulHmXKp3ja2DPIdPsS?gv=true';
+  const webhookUrl = 'https://services.leadconnectorhq.com/hooks/Yh5MFXsbWq36bxOSPUYh/webhook-trigger/5eb3eac7-f589-4d8c-a192-74960b865edf';
 
   // Memoize questions to prevent re-renders
   const questions = useMemo(() => [
@@ -109,7 +113,7 @@ const App = () => {
 
   const handleAnswer = useCallback((questionId, value) => {
     setAnswers(prev => ({ ...prev, [questionId]: value }));
-    
+
     if (currentStep < questions.length - 1) {
       setTimeout(() => setCurrentStep(currentStep + 1), 300);
     } else {
@@ -123,7 +127,7 @@ const App = () => {
 
   const getResultData = useCallback(() => {
     const score = calculateScore();
-    
+
     if (score >= 12) {
       return {
         title: 'AI-Savvy',
@@ -151,18 +155,68 @@ const App = () => {
     }
   }, [calculateScore]);
 
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const submitEmailAndData = async () => {
+    // Validate email
+    if (!userEmail.trim()) {
+      setEmailError('Please enter your email address');
+      return;
+    }
+
+    if (!validateEmail(userEmail)) {
+      setEmailError('Please enter a valid email address');
+      return;
+    }
+
+    setEmailError('');
+    setIsSubmitting(true);
+
+    const resultData = getResultData();
+    const payload = {
+      email: userEmail,
+      answers: answers,
+      score: calculateScore(),
+      result: resultData.title,
+      timestamp: new Date().toISOString()
+    };
+
+    try {
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        console.error('Webhook failed:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error sending webhook:', error);
+    } finally {
+      setIsSubmitting(false);
+      // Move to results page regardless of webhook success
+      setCurrentStep(questions.length + 1);
+    }
+  };
+
   const NorivaneWordmark = React.memo(({ isDark = false }) => (
-    <div style={{ 
-      fontSize: 'clamp(1.5rem, 4vw, 2rem)', 
-      fontWeight: 600, 
+    <div style={{
+      fontSize: 'clamp(1.5rem, 4vw, 2rem)',
+      fontWeight: 600,
       letterSpacing: '-0.02em',
       color: isDark ? '#FFFFFF' : '#0A2342'
     }}>
       <span style={{ color: isDark ? '#FFFFFF' : '#0A2342' }}>nor</span>
-      <span style={{ 
-        color: '#00B2A9', 
+      <span style={{
+        color: '#00B2A9',
         fontStyle: 'italic',
-        fontWeight: 400 
+        fontWeight: 400
       }}>i</span>
       <span style={{ color: isDark ? '#FFFFFF' : '#0A2342' }}>vane</span>
     </div>
@@ -170,7 +224,7 @@ const App = () => {
 
   const ProgressBar = React.memo(() => {
     const progress = currentStep <= questions.length ? (currentStep / questions.length) * 100 : 100;
-    
+
     return (
       <div style={{
         position: 'fixed',
@@ -198,6 +252,8 @@ const App = () => {
   const resetQuiz = useCallback(() => {
     setCurrentStep(-1);
     setAnswers({});
+    setUserEmail('');
+    setEmailError('');
   }, []);
 
   // Loading state
@@ -253,7 +309,7 @@ const App = () => {
           }}
         >
           <NorivaneWordmark />
-          
+
           <h1 style={{
             fontSize: 'clamp(1.8rem, 5vw, 2.5rem)',
             fontWeight: 700,
@@ -263,7 +319,7 @@ const App = () => {
           }}>
             The AI Litmus Test for Scalable Ops
           </h1>
-          
+
           <p style={{
             fontSize: 'clamp(1rem, 3vw, 1.2rem)',
             color: '#212529',
@@ -271,7 +327,7 @@ const App = () => {
           }}>
             <em>(in Under 3 Minutes)</em>
           </p>
-          
+
           <div style={{
             background: '#f8f9fa',
             padding: '1.5rem',
@@ -294,7 +350,7 @@ const App = () => {
               These questions are blunt—but so is the cost of not knowing.
             </p>
           </div>
-          
+
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -321,7 +377,7 @@ const App = () => {
   // Question screens
   if (currentStep < questions.length) {
     const question = questions[currentStep];
-    
+
     return (
       <>
         <ProgressBar />
@@ -351,7 +407,7 @@ const App = () => {
               <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
                 <NorivaneWordmark />
               </div>
-              
+
               <h2 style={{
                 fontSize: 'clamp(1.4rem, 4vw, 1.8rem)',
                 fontWeight: 700,
@@ -360,7 +416,7 @@ const App = () => {
               }}>
                 {question.title}
               </h2>
-              
+
               <p style={{
                 fontSize: 'clamp(1rem, 3vw, 1.2rem)',
                 color: '#212529',
@@ -369,7 +425,7 @@ const App = () => {
               }}>
                 {question.subtitle}
               </p>
-              
+
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {question.options.map((option, index) => (
                   <motion.button
@@ -393,7 +449,7 @@ const App = () => {
                   </motion.button>
                 ))}
               </div>
-              
+
               <div style={{
                 textAlign: 'center',
                 marginTop: '2rem',
@@ -409,9 +465,161 @@ const App = () => {
     );
   }
 
+  // Email capture screen
+  if (currentStep === questions.length) {
+    return (
+      <>
+        <ProgressBar />
+        <div style={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 'clamp(1rem, 4vw, 2rem)'
+        }}>
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            style={{
+              background: 'rgba(255, 255, 255, 0.95)',
+              borderRadius: '20px',
+              padding: 'clamp(2rem, 5vw, 3rem)',
+              maxWidth: '600px',
+              width: '100%',
+              textAlign: 'center',
+              boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)'
+            }}
+          >
+            <NorivaneWordmark />
+
+            <div style={{
+              fontSize: 'clamp(2.5rem, 6vw, 3rem)',
+              margin: '1.5rem 0'
+            }}>
+              📊
+            </div>
+
+            <h2 style={{
+              fontSize: 'clamp(1.6rem, 4.5vw, 2rem)',
+              fontWeight: 700,
+              color: '#0A2342',
+              marginBottom: '1rem',
+              lineHeight: 1.2
+            }}>
+              Get Your Personalised AI Readiness Report
+            </h2>
+
+            <p style={{
+              fontSize: 'clamp(1rem, 2.5vw, 1.1rem)',
+              color: '#6c757d',
+              marginBottom: '2rem',
+              lineHeight: 1.5
+            }}>
+              Enter your email to see your detailed results and personalised action plan
+            </p>
+
+            <div style={{
+              marginBottom: '1.5rem',
+              textAlign: 'left'
+            }}>
+              <input
+                type="email"
+                value={userEmail}
+                onChange={(e) => {
+                  setUserEmail(e.target.value);
+                  setEmailError('');
+                }}
+                placeholder="your.email@example.com"
+                disabled={isSubmitting}
+                style={{
+                  width: '100%',
+                  padding: '1rem',
+                  fontSize: 'clamp(0.9rem, 2.5vw, 1rem)',
+                  border: emailError ? '2px solid #FF6B6B' : '2px solid #e9ecef',
+                  borderRadius: '12px',
+                  outline: 'none',
+                  transition: 'border-color 0.2s ease',
+                  boxSizing: 'border-box'
+                }}
+                onFocus={(e) => {
+                  if (!emailError) {
+                    e.target.style.borderColor = '#00B2A9';
+                  }
+                }}
+                onBlur={(e) => {
+                  if (!emailError) {
+                    e.target.style.borderColor = '#e9ecef';
+                  }
+                }}
+              />
+              {emailError && (
+                <p style={{
+                  color: '#FF6B6B',
+                  fontSize: 'clamp(0.8rem, 2vw, 0.9rem)',
+                  marginTop: '0.5rem',
+                  textAlign: 'left'
+                }}>
+                  {emailError}
+                </p>
+              )}
+            </div>
+
+            <motion.button
+              whileHover={!isSubmitting ? { scale: 1.05 } : {}}
+              whileTap={!isSubmitting ? { scale: 0.95 } : {}}
+              onClick={submitEmailAndData}
+              disabled={isSubmitting}
+              style={{
+                background: isSubmitting ? '#6c757d' : '#00B2A9',
+                color: 'white',
+                border: 'none',
+                padding: '1rem 2rem',
+                fontSize: 'clamp(1rem, 2.5vw, 1.1rem)',
+                fontWeight: 600,
+                borderRadius: '50px',
+                cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                boxShadow: '0 4px 15px rgba(0, 178, 169, 0.3)',
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem'
+              }}
+            >
+              {isSubmitting ? (
+                <>
+                  <div style={{
+                    width: '20px',
+                    height: '20px',
+                    border: '2px solid rgba(255,255,255,0.3)',
+                    borderTop: '2px solid white',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite'
+                  }} />
+                  Submitting...
+                </>
+              ) : (
+                'See My Results 🚀'
+              )}
+            </motion.button>
+
+            <p style={{
+              fontSize: 'clamp(0.75rem, 2vw, 0.85rem)',
+              color: '#6c757d',
+              marginTop: '1rem',
+              opacity: 0.8
+            }}>
+              We respect your privacy. Your email will only be used to send your results.
+            </p>
+          </motion.div>
+        </div>
+      </>
+    );
+  }
+
   // Results page
   const resultData = getResultData();
-  
+
   return (
     <>
       <ProgressBar />
@@ -436,14 +644,14 @@ const App = () => {
           }}
         >
           <NorivaneWordmark />
-          
+
           <div style={{
             fontSize: 'clamp(3rem, 8vw, 4rem)',
             margin: '1rem 0'
           }}>
             {resultData.emoji}
           </div>
-          
+
           <h2 style={{
             fontSize: 'clamp(2rem, 6vw, 2.5rem)',
             fontWeight: 700,
@@ -452,7 +660,7 @@ const App = () => {
           }}>
             {resultData.title}
           </h2>
-          
+
           <div style={{
             background: '#f8f9fa',
             padding: '2rem',
@@ -475,7 +683,7 @@ const App = () => {
               {resultData.description}
             </p>
           </div>
-          
+
           <div style={{
             background: '#0A2342',
             color: 'white',
@@ -497,7 +705,7 @@ const App = () => {
             }}>
               Let's talk about how <strong>Norivane</strong> can help automate, scale, and get you deal-ready.
             </p>
-            
+
             <div style={{
               display: 'flex',
               alignItems: 'center',
@@ -524,11 +732,11 @@ const App = () => {
               >
                 Book 15-min Strategy Call 👉
               </motion.a>
-              
+
               {qrCodeUrl && (
                 <div style={{ textAlign: 'center' }}>
-                  <img 
-                    src={qrCodeUrl} 
+                  <img
+                    src={qrCodeUrl}
                     alt="QR Code for booking calendar appointment"
                     style={{
                       width: 'clamp(80px, 20vw, 100px)',
@@ -547,7 +755,7 @@ const App = () => {
               )}
             </div>
           </div>
-          
+
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}

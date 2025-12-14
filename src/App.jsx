@@ -160,6 +160,23 @@ const App = () => {
     return emailRegex.test(email);
   };
 
+  const formatAnswersForGHL = (answersObj) => {
+    // Convert answers object to a readable format
+    const questionLabels = {
+      'founder-freedom': 'Founder Freedom',
+      'decision-making': 'Decision Making',
+      'automation-level': 'Automation Level',
+      'sops-training': 'SOPs & Training',
+      'customer-interactions': 'Customer Interactions',
+      'ai-awareness': 'AI Awareness',
+      'exit-alignment': 'Exit Alignment'
+    };
+
+    return Object.entries(answersObj)
+      .map(([key, value]) => `${questionLabels[key]}: ${value}`)
+      .join(' | ');
+  };
+
   const submitEmailAndData = async () => {
     // Validate email
     if (!userEmail.trim()) {
@@ -178,11 +195,15 @@ const App = () => {
     const resultData = getResultData();
     const payload = {
       email: userEmail,
-      answers: answers,
+      answers: formatAnswersForGHL(answers),
       score: calculateScore(),
       result: resultData.title,
       timestamp: new Date().toISOString()
     };
+
+    console.log('📤 Sending webhook to GHL...');
+    console.log('Webhook URL:', webhookUrl);
+    console.log('Payload:', JSON.stringify(payload, null, 2));
 
     try {
       const response = await fetch(webhookUrl, {
@@ -193,11 +214,20 @@ const App = () => {
         body: JSON.stringify(payload)
       });
 
+      console.log('✅ Webhook response status:', response.status);
+      console.log('Response status text:', response.statusText);
+
+      const responseText = await response.text();
+      console.log('Response body:', responseText);
+
       if (!response.ok) {
-        console.error('Webhook failed:', response.statusText);
+        console.error('❌ Webhook failed with status:', response.status);
+      } else {
+        console.log('✅ Webhook sent successfully!');
       }
     } catch (error) {
-      console.error('Error sending webhook:', error);
+      console.error('❌ Error sending webhook:', error);
+      console.error('Error details:', error.message);
     } finally {
       setIsSubmitting(false);
       // Move to results page regardless of webhook success
